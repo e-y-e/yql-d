@@ -1,0 +1,11 @@
+{
+	"name": "yql-d",
+	"description": "Support for using the Yahoo Query Language in D",
+
+	"targetType": "library",
+	"dependencies": {},
+
+	"license": "BSL-1.0",
+	"copyright": "Copyright © 2017, Lewis Revill",
+	"authors": [ "Lewis Revill" ]
+}
