@@ -498,7 +498,39 @@
     Lewis Revill
   </p>
 </div>
+<div class="ddoc_examples">
+  <h4>Examples</h4>
+  <p class="para">
+    Analyzing tech corporations by market capitalization.
 
+<section class="code_listing">
+  <div class="code_sample">
+    <div class="dlang">
+      <ol class="code_lines">
+        <li><code class="code"><span class="keyword">import</span> std.algorithm.searching : all;
+
+<span class="keyword">static</span> <span class="keyword">immutable</span> data = [column(<span class="string_literal">"Name"</span>), column(<span class="string_literal">"MarketCapitalization"</span>), column(<span class="string_literal">"Ask"</span>), column(<span class="string_literal">"Bid"</span>), column(<span class="string_literal">"Change"</span>)];
+
+<span class="keyword">static</span> <span class="keyword">immutable</span> stocks = [value(<span class="string_literal">"'AAPL'"</span>), value(<span class="string_literal">"'GOOG'"</span>), value(<span class="string_literal">"'YHOO'"</span>), value(<span class="string_literal">"'FB'"</span>), value(<span class="string_literal">"'AMZN'"</span>)];
+<span class="keyword">assert</span>(stocks.all!(v =&gt; v.str != <span class="string_literal">"null"</span>));
+
+<span class="keyword">immutable</span> query = table(<span class="string_literal">"yahoo.finance.quotes"</span>)
+    .select(data)
+    .where(column(<span class="string_literal">"symbol"</span>).among(stocks))
+    .orderBy(column(<span class="string_literal">"MarketCapitalization"</span>), Order.descending);
+<span class="keyword">assert</span>(query.valid);
+
+<span class="comment">//     immutable uri = query
+</span><span class="comment">//         .range
+</span><span class="comment">//         .uri;
+</span></code></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+  </p>
+</div>
 </section>
 </section>
       </article>
