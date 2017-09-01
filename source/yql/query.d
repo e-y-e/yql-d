@@ -517,6 +517,12 @@ unittest
 
 /**
  * Type representing a generic comparison between a column and a single value.
+ *
+ * Params:
+ *     op = (template parameter) the specific comparison that the type
+ *          represents, can be any of the following: =,!=,<,>,<=,>=
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column and value
  */
 struct Compare(string op, Char)
     if (op == "=" || op == "!=" || op == "<" || op == ">" || op == "<=" ||
@@ -545,6 +551,14 @@ struct Compare(string op, Char)
 /**
  * Creates a generic $(LINK2 #Compare, Compare) object with a given _column and
  * _value.
+ *
+ * Params:
+ *     op = (template parameter) the specific comparison that the type
+ *          represents, can be any of the following: =,!=,<,>,<=,>=
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!(op, Char) compare(string op, Char)(Column!Char column,
 Value!Char value)
@@ -570,6 +584,12 @@ unittest
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the "=" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!("=", Char) equal(Char)(Column!Char column, Value!Char value)
 {
@@ -579,6 +599,12 @@ Compare!("=", Char) equal(Char)(Column!Char column, Value!Char value)
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the "!=" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!("!=", Char) notEqual(Char)(Column!Char column, Value!Char value)
 {
@@ -588,6 +614,12 @@ Compare!("!=", Char) notEqual(Char)(Column!Char column, Value!Char value)
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the "<" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!("<", Char) lessThan(Char)(Column!Char column, Value!Char value)
 {
@@ -597,6 +629,12 @@ Compare!("<", Char) lessThan(Char)(Column!Char column, Value!Char value)
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the ">" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!(">", Char) greaterThan(Char)(Column!Char column, Value!Char value)
 {
@@ -606,6 +644,12 @@ Compare!(">", Char) greaterThan(Char)(Column!Char column, Value!Char value)
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the "<=" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!("<=", Char) lessThanOrEqual(Char)(Column!Char column, Value!Char value)
 {
@@ -615,6 +659,12 @@ Compare!("<=", Char) lessThanOrEqual(Char)(Column!Char column, Value!Char value)
 /**
  * Creates a $(LINK2 #Compare, Compare) object for the ">=" comparison with a
  * given _column and _value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _value
+ *     column = the _column to be compared
+ *     value = the _value to be compared against
  */
 Compare!(">=", Char) greaterThanOrEqual(Char)(Column!Char column,
 Value!Char value)
@@ -626,6 +676,10 @@ Value!Char value)
 /**
  * Type representing a comparison between a column and a lower value and an
  * upper value.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column and lower and upper values
  */
 struct Between(Char)
 {
@@ -648,6 +702,13 @@ struct Between(Char)
 /**
  * Creates a $(LINK2 #Between, Between) object with a given _column and _lower
  * and _upper values.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column and _lower and _upper values
+ *     column = the _column to be compared
+ *     lower = the _lower limit of the possible values (inclusive)
+ *     upper = the _upper limit of the possible values (inclusive)
  */
 Between!Char between(Char)(Column!Char column, Value!Char lower,
 Value!Char upper)
@@ -670,6 +731,10 @@ unittest
 /**
  * Type representing a comparison between a column and a range of possible
  * values.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column and values
  */
 struct Among(Char)
 {
@@ -691,6 +756,12 @@ struct Among(Char)
 
 /**
  * Creates an $(LINK2 #Among, Among) object with a given _column and _values.
+ *
+ * Params:
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column and values
+ *     column = the _column to compare against the _values
+ *     values = the possible _values that the _column can take
  */
 Among!Char among(Char)(Column!Char column, immutable(Value!Char)[] values)
 {
@@ -715,6 +786,10 @@ unittest
 
 /**
  * Type representing an 'and' operator.
+ *
+ * Params:
+ *     LHS = (template parameter) the type of the left expression
+ *     RHS = (template parameter) the type of the right expression
  */
 struct And(LHS, RHS)
 {
@@ -734,6 +809,12 @@ struct And(LHS, RHS)
 
 /**
  * Creates an $(LINK2 #And, And) object with the given left and right expressions.
+ *
+ * Params:
+ *     LHS = (template parameter) the type of the left expression
+ *     RHS = (template parameter) the type of the right expression
+ *     lhs = the expression on the left of the operator
+ *     rhs = the expression on the right of the operator
  */
 And!(LHS, RHS) and(LHS, RHS)(LHS lhs, RHS rhs)
 {
@@ -754,6 +835,10 @@ unittest
 
 /**
  * Type representing an 'or' operator.
+ *
+ * Params:
+ *     LHS = (template parameter) the type of the left expression
+ *     RHS = (template parameter) the type of the right expression
  */
 struct Or(LHS, RHS)
 {
@@ -773,6 +858,12 @@ struct Or(LHS, RHS)
 
 /**
  * Creates an $(LINK2 #Or, Or) object with the given left and right expressions.
+ *
+ * Params:
+ *     LHS = (template parameter) the type of the left expression
+ *     RHS = (template parameter) the type of the right expression
+ *     lhs = the expression on the left of the operator
+ *     rhs = the expression on the right of the operator
  */
 Or!(LHS, RHS) or(LHS, RHS)(LHS lhs, RHS rhs)
 {
@@ -793,6 +884,9 @@ unittest
 
 /**
  * Type representing a 'not' operator.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the negated expression
  */
 struct Not(Expr)
 {
@@ -810,6 +904,10 @@ struct Not(Expr)
 
 /**
  * Creates a $(LINK2 #Not, Not) object with the given expression.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the negated expression
+ *     expr = the negated expression
  */
 Not!Expr not(Expr)(Expr expr)
 {
@@ -1142,6 +1240,11 @@ unittest
 
 /**
  * Type representing a YQL 'where' clause.
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the statement that comes
+ *                 before the clause
+ *     Expr = (template parameter) the type of the conditional expression
  */
 struct Where(Statement, Expr)
 {
@@ -1162,6 +1265,13 @@ struct Where(Statement, Expr)
 /**
  * Creates a $(LINK2 #Where, Where) clause with the given _statement and
  * conditional expression.
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the _statement that comes
+ *                 before the clause
+ *     Expr = (template parameter) the type of the conditional expression
+ *     statement = the part of the _statement that occurs before this clause
+ *     expr = the conditional expression given to this 'where' clause
  */
 Where!(Statement, Expr) where(Statement, Expr)(Statement statement, Expr expr)
 {
@@ -1191,6 +1301,12 @@ enum Order
 
 /**
  * Type representing a YQL 'order by' clause
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the statement that comes
+ *                 before the clause
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column
  */
 struct OrderBy(Statement, Char)
 {
@@ -1213,6 +1329,15 @@ struct OrderBy(Statement, Char)
 /**
  * Creates an $(LINK2 #OrderBy, OrderBy) clause with the given _statement,
  * _column and sort _order.
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the _statement that comes
+ *                 before the clause
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column
+ *     statement = the part of the _statement that occurs before this clause
+ *     column = the _column to order the results by
+ *     order = the _order in which to sort the results
  */
 OrderBy!(Statement, Char) orderBy(Statement, Char)(Statement statement,
 Column!Char column, Order order = Order.ascending)
@@ -1233,7 +1358,13 @@ unittest
 
 
 /**
- * Type representing a YQL 'group by' clause
+ * Type representing a YQL 'group by' clause.
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the statement that comes
+ *                 before the clause
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the column
  */
 struct GroupBy(Statement, Char)
 {
@@ -1254,6 +1385,14 @@ struct GroupBy(Statement, Char)
 /**
  * Creates a $(LINK2 #GroupBy, GroupBy) clause with the given _statement and
  * _column.
+ *
+ * Params:
+ *     Statement = (template parameter) the type of the _statement that comes
+ *                 before the clause
+ *     Char = (template parameter) character type used in the underlying
+ *            representation of the _column
+ *     statement = the part of the _statement that occurs before this clause
+ *     column = the _column to group the results by
  */
 GroupBy!(Statement, Char) groupBy(Statement, Char)(Statement statement,
 Column!Char column)
