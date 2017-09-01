@@ -401,7 +401,7 @@ struct Value(Char)
 {
     alias String = immutable(Char)[];
 
-    String str = "null";
+    immutable String str = "null";
 
     this(String str)
     {
@@ -475,8 +475,8 @@ unittest
  */
 struct Entry(Char)
 {
-    Column!Char column;
-    Value!Char value;
+    immutable Column!Char column;
+    immutable Value!Char value;
 
     this(Column!Char column, Value!Char value)
     {
@@ -528,8 +528,8 @@ struct Compare(string op, Char)
     if (op == "=" || op == "!=" || op == "<" || op == ">" || op == "<=" ||
         op == ">=")
 {
-    Column!Char column;
-    Value!Char value;
+    immutable Column!Char column;
+    immutable Value!Char value;
 
     this(Column!Char column, Value!Char value)
     {
@@ -683,9 +683,9 @@ Value!Char value)
  */
 struct Between(Char)
 {
-    Column!Char column;
-    Value!Char lower;
-    Value!Char upper;
+    immutable Column!Char column;
+    immutable Value!Char lower;
+    immutable Value!Char upper;
 
     this(Column!Char column, Value!Char lower, Value!Char upper)
     {
@@ -740,8 +740,8 @@ struct Among(Char)
 {
     alias Values = immutable(Value!Char)[];
 
-    Column!Char column;
-    Values values;
+    immutable Column!Char column;
+    immutable Values values;
 
     this(Column!Char column, Values values)
     {
@@ -793,8 +793,8 @@ unittest
  */
 struct And(LHS, RHS)
 {
-    LHS lhs;
-    RHS rhs;
+    immutable LHS lhs;
+    immutable RHS rhs;
 
     this(LHS lhs, RHS rhs)
     {
@@ -842,8 +842,8 @@ unittest
  */
 struct Or(LHS, RHS)
 {
-    LHS lhs;
-    RHS rhs;
+    immutable LHS lhs;
+    immutable RHS rhs;
 
     this(LHS lhs, RHS rhs)
     {
@@ -890,7 +890,7 @@ unittest
  */
 struct Not(Expr)
 {
-    Expr expr;
+    immutable Expr expr;
 
     this(Expr expr)
     {
@@ -951,8 +951,8 @@ struct Select(Char)
 {
     alias Columns = immutable(Column!Char)[];
 
-    Table!Char table;
-    Columns columns;
+    immutable Table!Char table;
+    immutable Columns columns;
 
     this(Table!Char table, Columns columns)
     {
@@ -1025,8 +1025,8 @@ struct InsertInto(from!"std.typecons".Flag!"verbose" verbose, Char)
 {
     alias Values = immutable(Value!Char)[];
 
-    Table!Char table;
-    Values values;
+    immutable Table!Char table;
+    immutable Values values;
 
     static if (verbose)
     {
@@ -1137,8 +1137,8 @@ struct Update(Char)
 {
     alias Entries = immutable(Entry!Char)[];
 
-    Table!Char table;
-    Entries entries;
+    immutable Table!Char table;
+    immutable Entries entries;
 
     this(Table!Char table, Entries entries)
     {
@@ -1201,7 +1201,7 @@ unittest
  */
 struct DeleteFrom(Char)
 {
-    Table!Char table;
+    immutable Table!Char table;
 
     this(Table!Char table)
     {
@@ -1248,8 +1248,8 @@ unittest
  */
 struct Where(Statement, Expr)
 {
-    Statement statement;
-    Expr expr;
+    immutable Statement statement;
+    immutable Expr expr;
 
     this(Statement statement, Expr expr)
     {
@@ -1310,9 +1310,9 @@ enum Order
  */
 struct OrderBy(Statement, Char)
 {
-    Statement statement;
-    Column!Char column;
-    Order order;
+    immutable Statement statement;
+    immutable Column!Char column;
+    immutable Order order;
 
     this(Statement statement, Column!Char column, Order order)
     {
@@ -1368,8 +1368,8 @@ unittest
  */
 struct GroupBy(Statement, Char)
 {
-    Statement statement;
-    Column!Char column;
+    immutable Statement statement;
+    immutable Column!Char column;
 
     this(Statement statement, Column!Char column)
     {
