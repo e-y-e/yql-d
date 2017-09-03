@@ -371,6 +371,11 @@ unittest
     // Multiple names are not supported, use multiple columns instead.
     immutable qc = column("quantity,cost");
     assert(!qc.valid);
+
+    // Period-separated identifiers are valid column names.
+    immutable sq = column("stock.quantity");
+    assert(sq.valid);
+    assert(sq.name == "stock.quantity");
 }
 
 @safe @nogc pure nothrow
@@ -471,9 +476,9 @@ unittest
  * Type representing a YQL entry.
  *
  * This type stores the column and value that represent a YQL table entry in the
- * member variables `column` and `value`. If the given column was not valid, the
- * member variables are left uninitialized, and the property `valid` returns
- * false.
+ * member variables `column` and `value`. If the given column was not valid or
+ * it represented the wildcard "*", the member variables are left uninitialized,
+ * and the property `valid` returns false.
  *
  * Params:
  *     Char = (template parameter) character type used in the underlying
@@ -486,7 +491,7 @@ struct Entry(Char)
 
     this(Column!Char column, Value!Char value)
     {
-        if (!column.valid) return;
+        if (!column.valid || column.name == "*") return;
 
         this.column = column;
         this.value = value;
@@ -517,9 +522,28 @@ Entry!Char entry(Char)(Column!Char column, Value!Char value)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    // Any valid column name can be used in an entry.
+    immutable name1 = column("name").entry(value("'Thomas'"));
+    assert(name1.valid);
+    assert(name1.range.eq("name='Thomas'"));
+
+    // Null values are fine in a valid entry.
+    immutable tel = column("telno").entry(value("null"));
+    assert(tel.valid);
+    assert(tel.range.eq("telno=null"));
+
+    // An invalid column gives an invalid entry.
+    immutable name2 = column("name=").entry(value("'Thomas'"));
+    assert(!name2.valid);
+
+    // The wildcard "*", while a valid column name, cannot be used in an entry.
+    immutable all = column("*").entry(value("'$$$'"));
+    assert(!all.valid);
 }
 
 @safe @nogc pure nothrow
