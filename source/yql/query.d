@@ -177,7 +177,7 @@ unittest
         .orderBy(column("Ask"));
 
     assert(query.valid);
-//     assert(query.asRange
+//     assert(query.range
 //         .equal("select Ask,Bid,Change
 //                 from yahoo.finance.tables
 //                 where symbol in ('FB','GOOG','AMZN')
@@ -201,7 +201,7 @@ unittest
         .orderBy(column("Rating.AverageRating"), Order.descending);
 
     assert(query.valid);
-//     assert(query.asRange
+//     assert(query.range
 //         .equal("select Title,Address,City,BusinessURL,Rating.AverageRating,Categories
 //                 from yahoo.local
 //                 where query='vegan'
@@ -257,6 +257,8 @@ struct Table(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout { return name; }
 }
 
 /**
@@ -330,6 +332,8 @@ struct Column(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout { return name; }
 }
 
 /**
@@ -411,6 +415,8 @@ struct Value(Char)
 
         this.str = str;
     }
+
+    @property auto range() inout { return str; }
 }
 
 /**
@@ -487,6 +493,13 @@ struct Entry(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(column.range, "=", value.range);
+    }
 }
 
 /**
@@ -546,6 +559,13 @@ struct Compare(string op, Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(column.range, op, value.range);
+    }
 }
 
 /**
@@ -697,6 +717,14 @@ struct Between(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(column.range, " between ", lower.range, " and ",
+                     upper.range);
+    }
 }
 
 /**
@@ -752,6 +780,15 @@ struct Among(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+        import std.algorithm.iteration : map, joiner;
+
+        return chain(column.range, " in (",
+                     values.map!(v => v.range.dup).joiner(","), ")");
+    }
 }
 
 /**
@@ -805,6 +842,13 @@ struct And(LHS, RHS)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(lhs.range, " and ", rhs.range);
+    }
 }
 
 /**
@@ -854,6 +898,13 @@ struct Or(LHS, RHS)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(lhs.range, " or ", rhs.range);
+    }
 }
 
 /**
@@ -900,6 +951,13 @@ struct Not(Expr)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain("not ", expr.range);
+    }
 }
 
 /**
@@ -966,6 +1024,15 @@ struct Select(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+        import std.algorithm.iteration : map, joiner;
+
+        return chain("select ", columns.map!(c => c.range.dup).joiner(","),
+                     "\nfrom ", table.range, "\n");
+    }
 }
 
 /**
@@ -1056,6 +1123,24 @@ struct InsertInto(from!"std.typecons".Flag!"verbose" verbose, Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+        import std.algorithm.iteration : map, joiner;
+
+        static if (verbose)
+        {
+            return chain("insert into ", table.range, " (",
+                         columns.map!(c => c.range).joiner(","), ")\nvalues (",
+                         values.map!(v => v.range).joiner(","), ")\n");
+        }
+        else
+        {
+            return chain("insert into ", table.range, "\nvalues (",
+                         values.map!(v => v.range).joiner(","), ")\n");
+        }
+    }
 }
 
 /**
@@ -1152,6 +1237,15 @@ struct Update(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+        import std.algorithm.iteration : map, joiner;
+
+        return chain("update ", table.range, "\nset ",
+                     entries.map!(e => e.range.dup).joiner(","), "\n");
+    }
 }
 
 /**
@@ -1211,6 +1305,13 @@ struct DeleteFrom(Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain("delete from ", table.range, "\n");
+    }
 }
 
 /**
@@ -1260,6 +1361,13 @@ struct Where(Statement, Expr)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(statement.range, "where ", expr.range, "\n");
+    }
 }
 
 /**
@@ -1293,10 +1401,10 @@ unittest
 /**
  *
  */
-enum Order
+enum Order : string
 {
-    ascending,
-    descending
+    ascending = "asc",
+    descending = "desc"
 }
 
 /**
@@ -1324,6 +1432,14 @@ struct OrderBy(Statement, Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        import std.range : chain;
+
+        return chain(statement.range, "order by ", column.range, " ",
+                     cast(string)order, "\n");
+    }
 }
 
 /**
@@ -1380,6 +1496,11 @@ struct GroupBy(Statement, Char)
     }
 
     mixin validityCheck;
+
+    @property auto range() inout
+    {
+        return chain(statement.range, "group by ", column.range, "\n");
+    }
 }
 
 /**
