@@ -613,10 +613,28 @@ Value!Char value)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
-    immutable comp = column("symbol").equal(value("\"AAPL\""));
+    import std.algorithm.comparison : eq = equal;
+
+    // This comparison is perfectly valid.
+    immutable filter1 = column("symbol").equal(value("'AAPL'"));
+    assert(filter1.valid);
+    assert(filter1.range.eq("symbol='AAPL'"));
+
+    // Valid comparisons always require a valid column.
+    immutable filter2 = column("symbol=").equal(value("'AAPL'"));
+    assert(!filter2.valid);
+
+    // For direct comparisons, comparing against a null value is fine.
+    immutable comp1 = column("quantity").notEqual(value("null"));
+    assert(comp1.valid);
+    assert(comp1.range.eq("quantity!=null"));
+
+    // For ordered comparisons, comparing against a null value is not valid.
+    immutable comp2 = column("quantity").greaterThan(value("null"));
+    assert(!comp2.valid);
 }
 
 @safe @nogc pure nothrow
@@ -769,9 +787,27 @@ Value!Char upper)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    // This comparison is perfectly valid.
+    immutable filter1 = column("price").between(value("50"), value("150"));
+    assert(filter1.valid);
+    assert(filter1.range.eq("price between 50 and 150"));
+
+    // Valid comparisons always require a valid column.
+    immutable filter2 = column("price$").between(value("50"), value("150"));
+    assert(!filter2.valid);
+
+    // If either value is null, the between comparison is not valid.
+    immutable comp1 = column("quantity").between(value("100"), value("null"));
+    assert(!comp1.valid);
+
+    // Ditto for both null.
+    immutable comp2 = column("quantity").between(value("null"), value("null"));
+    assert(!comp2.valid);
 }
 
 @safe @nogc pure nothrow
@@ -830,13 +866,28 @@ Among!Char among(Char)(Column!Char column, immutable(Value!Char)[] values)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
-    static immutable symbols = [value("\"AAPL\""), value("\"GOOG\""),
-                                value("\"YHOO\"")];
+    import std.algorithm.comparison : eq = equal;
 
-    immutable cond = column("symbol").among(symbols);
+    static immutable symbols = [value("'AAPL'"), value("'GOOG'"),
+                                value("'YHOO'")];
+
+    // This comparison is perfectly valid.
+    immutable filter1 = column("symbol").among(symbols);
+    assert(filter1.valid);
+    assert(filter1.range.eq("symbol in ('AAPL','GOOG','YHOO')"));
+
+    // Valid comparisons always require a valid column name.
+    immutable filter2 = column("symbol=").among(symbols);
+    assert(!filter2.valid);
+
+    // Any number of the values can be null.
+    static immutable badStrings = [value("null"), value("''")];
+    immutable sieve = column("name").among(badStrings);
+    assert(sieve.valid);
+    assert(sieve.range.eq("name in (null,'')"));
 }
 
 @safe @nogc pure nothrow
