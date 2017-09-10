@@ -941,9 +941,15 @@ And!(LHS, RHS) and(LHS, RHS)(LHS lhs, RHS rhs)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    immutable cond = column("category").equal(value("'sports'"))
+        .and(column("price").lessThan(value("250")));
+    assert(cond.valid);
+    assert(cond.range.eq("category='sports' and price<250"));
 }
 
 @safe @nogc pure nothrow
@@ -997,9 +1003,15 @@ Or!(LHS, RHS) or(LHS, RHS)(LHS lhs, RHS rhs)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    immutable cond = column("rating").greaterThan(value("4"))
+        .or(column("price").lessThan(value("150")));
+    assert(cond.valid);
+    assert(cond.range.eq("rating>4 or price<150"));
 }
 
 @safe @nogc pure nothrow
@@ -1048,9 +1060,14 @@ Not!Expr not(Expr)(Expr expr)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    immutable cond = not(column("name").equal(value("null")));
+    assert(cond.valid);
+    assert(cond.range.eq("not name=null"));
 }
 
 @safe @nogc pure nothrow
