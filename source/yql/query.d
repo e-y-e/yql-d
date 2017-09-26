@@ -130,7 +130,7 @@
  *
  * Clauses:
  * Clauses are used to restrict and refine the action of basic statements to
- * create a complete statement.
+ * create a complete query.
  * $(TABLE
  *     $(TR $(TD $(B Type Name)) $(TD $(B Description)))
  *     $(TR $(TD $(LINK2 #Where, Where))
@@ -148,13 +148,13 @@
  *     $(TR $(TD $(B Function Name)) $(TD $(B Description)))
  *     $(TR $(TD $(LINK2 #where, where))
  *          $(TD Creates a $(LINK2 #Where, Where) clause with the given
- *               statement and conditional expression))
+ *               query and conditional expression))
  *     $(TR $(TD $(LINK2 #orderBy, orderBy))
  *          $(TD Creates an $(LINK2 #OrderBy, OrderBy) clause with the given
- *               statement, column and sort order))
+ *               query, column and sort order))
  *     $(TR $(TD $(LINK2 #groupBy, groupBy))
  *          $(TD Creates a $(LINK2 #GroupBy, GroupBy) clause with the given
- *               statement and column))
+ *               query and column))
  * )
  *
  *
@@ -904,6 +904,8 @@ unittest
  *     RHS = (template parameter) the type of the right expression
  */
 struct And(LHS, RHS)
+   if ((from!"yql.util".isConditional!LHS ||
+        from!"yql.util".isQuery!LHS) && from!"yql.util".isConditional!RHS)
 {
     immutable LHS lhs;
     immutable RHS rhs;
@@ -920,9 +922,17 @@ struct And(LHS, RHS)
 
     @property auto range() inout
     {
+        import yql.util : isQuery;
         import std.range : chain;
 
-        return chain(lhs.range, " and ", rhs.range);
+        static if (isQuery!LHS)
+        {
+            return chain(lhs.range, " and ", rhs.range, "\n");
+        }
+        else
+        {
+            return chain(lhs.range, " and ", rhs.range);
+        }
     }
 }
 
@@ -936,6 +946,9 @@ struct And(LHS, RHS)
  *     rhs = the expression on the right of the operator
  */
 And!(LHS, RHS) and(LHS, RHS)(LHS lhs, RHS rhs)
+   if ((from!"yql.util".isConditional!LHS ||
+        from!"yql.util".isConditionalQuery!LHS) &&
+       from!"yql.util".isConditional!RHS)
 {
     return And!(LHS, RHS)(lhs, rhs);
 }
@@ -966,6 +979,9 @@ unittest
  *     RHS = (template parameter) the type of the right expression
  */
 struct Or(LHS, RHS)
+   if ((from!"yql.util".isConditional!LHS ||
+        from!"yql.util".isConditionalQuery!LHS) &&
+       from!"yql.util".isConditional!RHS)
 {
     immutable LHS lhs;
     immutable RHS rhs;
@@ -982,9 +998,17 @@ struct Or(LHS, RHS)
 
     @property auto range() inout
     {
+        import yql.util : isQuery;
         import std.range : chain;
 
-        return chain(lhs.range, " or ", rhs.range);
+        static if (isQuery!LHS)
+        {
+            return chain(lhs.range, " or ", rhs.range, "\n");
+        }
+        else
+        {
+            return chain("(", lhs.range, " or ", rhs.range, ")");
+        }
     }
 }
 
@@ -998,6 +1022,8 @@ struct Or(LHS, RHS)
  *     rhs = the expression on the right of the operator
  */
 Or!(LHS, RHS) or(LHS, RHS)(LHS lhs, RHS rhs)
+   if ((from!"yql.util".isConditional!LHS ||
+        from!"yql.util".isQuery!LHS) && from!"yql.util".isConditional!RHS)
 {
     return Or!(LHS, RHS)(lhs, rhs);
 }
@@ -1011,7 +1037,7 @@ unittest
     immutable cond = column("rating").greaterThan(value("4"))
         .or(column("price").lessThan(value("150")));
     assert(cond.valid);
-    assert(cond.range.eq("rating>4 or price<150"));
+    assert(cond.range.eq("(rating>4 or price<150)"));
 }
 
 @safe @nogc pure nothrow
@@ -1027,6 +1053,7 @@ unittest
  *     Expr = (template parameter) the type of the negated expression
  */
 struct Not(Expr)
+   if (from!"yql.util".isConditional!Expr)
 {
     immutable Expr expr;
 
@@ -1055,6 +1082,7 @@ struct Not(Expr)
  *     expr = the negated expression
  */
 Not!Expr not(Expr)(Expr expr)
+   if (from!"yql.util".isConditional!Expr)
 {
     return Not!Expr(expr);
 }
@@ -1472,20 +1500,21 @@ unittest
  * Type representing a YQL 'where' clause.
  *
  * Params:
- *     Statement = (template parameter) the type of the statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the query that comes before the
+ *             clause
  *     Expr = (template parameter) the type of the conditional expression
  */
-struct Where(Statement, Expr)
+struct Where(Query, Expr)
+    if (from!"yql.util".isQuery!Query && from!"yql.util".isConditional!Expr)
 {
-    immutable Statement statement;
+    immutable Query query;
     immutable Expr expr;
 
-    this(Statement statement, Expr expr)
+    this(Query query, Expr expr)
     {
-        if (!statement.valid || !expr.valid) return;
+        if (!query.valid || !expr.valid) return;
 
-        this.statement = statement;
+        this.query = query;
         this.expr = expr;
     }
 
@@ -1495,24 +1524,25 @@ struct Where(Statement, Expr)
     {
         import std.range : chain;
 
-        return chain(statement.range, "where ", expr.range, "\n");
+        return chain(query.range, "where ", expr.range, "\n");
     }
 }
 
 /**
- * Creates a $(LINK2 #Where, Where) clause with the given _statement and
+ * Creates a $(LINK2 #Where, Where) clause with the given _query and
  * conditional expression.
  *
  * Params:
- *     Statement = (template parameter) the type of the _statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the _query that comes before the
+ *             clause
  *     Expr = (template parameter) the type of the conditional expression
- *     statement = the part of the _statement that occurs before this clause
+ *     query = the part of the _query that occurs before this clause
  *     expr = the conditional expression given to this 'where' clause
  */
-Where!(Statement, Expr) where(Statement, Expr)(Statement statement, Expr expr)
+Where!(Query, Expr) where(Query, Expr)(Query query, Expr expr)
+    if (from!"yql.util".isQuery!Query && from!"yql.util".isConditional!Expr)
 {
-    return Where!(Statement, Expr)(statement, expr);
+    return Where!(Query, Expr)(query, expr);
 }
 
 ///
@@ -1552,22 +1582,24 @@ enum Order : string
  * Type representing a YQL 'order by' clause
  *
  * Params:
- *     Statement = (template parameter) the type of the statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the query that comes before the
+ *             clause
  *     Char = (template parameter) character type used in the underlying
  *            representation of the column
  */
-struct OrderBy(Statement, Char)
+struct OrderBy(Query, Char)
+    if (from!"yql.util".isQuery!Query &&
+        is(from!"yql.util".StatementType!Query : Select!Char))
 {
-    immutable Statement statement;
+    immutable Query query;
     immutable Column!Char column;
     immutable Order order;
 
-    this(Statement statement, Column!Char column, Order order)
+    this(Query query, Column!Char column, Order order)
     {
-        if (!statement.valid || !column.valid) return;
+        if (!query.valid || !column.valid) return;
 
-        this.statement = statement;
+        this.query = query;
         this.column = column;
         this.order = order;
     }
@@ -1578,28 +1610,30 @@ struct OrderBy(Statement, Char)
     {
         import std.range : chain;
 
-        return chain(statement.range, "order by ", column.range, " ",
+        return chain(query.range, "order by ", column.range, " ",
                      cast(string)order, "\n");
     }
 }
 
 /**
- * Creates an $(LINK2 #OrderBy, OrderBy) clause with the given _statement,
- * _column and sort _order.
+ * Creates an $(LINK2 #OrderBy, OrderBy) clause with the given _query, _column
+ * and sort _order.
  *
  * Params:
- *     Statement = (template parameter) the type of the _statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the _query that comes before the
+ *             clause
  *     Char = (template parameter) character type used in the underlying
  *            representation of the _column
- *     statement = the part of the _statement that occurs before this clause
+ *     query = the part of the _query that occurs before this clause
  *     column = the _column to order the results by
  *     order = the _order in which to sort the results
  */
-OrderBy!(Statement, Char) orderBy(Statement, Char)(Statement statement,
-Column!Char column, Order order = Order.ascending)
+OrderBy!(Query, Char) orderBy(Query, Char)(Query query, Column!Char column,
+Order order = Order.ascending)
+    if (from!"yql.util".isQuery!Query &&
+        is(from!"yql.util".StatementType!Query : Select!Char))
 {
-    return OrderBy!(Statement, Char)(statement, column, order);
+    return OrderBy!(Query, Char)(query, column, order);
 }
 
 ///
@@ -1633,21 +1667,23 @@ unittest
  * Type representing a YQL 'group by' clause.
  *
  * Params:
- *     Statement = (template parameter) the type of the statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the query that comes before the
+ *             clause
  *     Char = (template parameter) character type used in the underlying
  *            representation of the column
  */
-struct GroupBy(Statement, Char)
+struct GroupBy(Query, Char)
+    if (from!"yql.util".isQuery!Query &&
+        is(from!"yql.util".StatementType!Query : Select!Char))
 {
-    immutable Statement statement;
+    immutable Query query;
     immutable Column!Char column;
 
-    this(Statement statement, Column!Char column)
+    this(Query query, Column!Char column)
     {
-        if (!statement.valid || !column.valid) return;
+        if (!query.valid || !column.valid) return;
 
-        this.statement = statement;
+        this.query = query;
         this.column = column;
     }
 
@@ -1657,26 +1693,27 @@ struct GroupBy(Statement, Char)
     {
         import std.range : chain;
 
-        return chain(statement.range, "group by ", column.range, "\n");
+        return chain(query.range, "group by ", column.range, "\n");
     }
 }
 
 /**
- * Creates a $(LINK2 #GroupBy, GroupBy) clause with the given _statement and
+ * Creates a $(LINK2 #GroupBy, GroupBy) clause with the given _query and
  * _column.
  *
  * Params:
- *     Statement = (template parameter) the type of the _statement that comes
- *                 before the clause
+ *     Query = (template parameter) the type of the _query that comes before the
+ *             clause
  *     Char = (template parameter) character type used in the underlying
  *            representation of the _column
- *     statement = the part of the _statement that occurs before this clause
+ *     query = the part of the _query that occurs before this clause
  *     column = the _column to group the results by
  */
-GroupBy!(Statement, Char) groupBy(Statement, Char)(Statement statement,
-Column!Char column)
+GroupBy!(Query, Char) groupBy(Query, Char)(Query query, Column!Char column)
+    if (from!"yql.util".isQuery!Query &&
+        is(from!"yql.util".StatementType!Query : Select!Char))
 {
-    return GroupBy!(Statement, Char)(statement, column);
+    return GroupBy!(Query, Char)(query, column);
 }
 
 ///

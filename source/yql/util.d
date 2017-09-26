@@ -12,6 +12,22 @@
  *     $(TR $(TD $(LINK2 #isQuotedString, isQuotedString))
  *          $(TD Determines whether a string represents a quoted string))
  * )
+ * $(TABLE
+ *     $(TR $(TD $(B Template Name)) $(TD $(B Description)))
+ *     $(TR $(TD $(LINK2 #isStatement, isStatement))
+ *          $(TD Evaluates to true for types that form YQL statements))
+ *     $(TR $(TD $(LINK2 #isQuery, isQuery))
+ *          $(TD Evaluates to true for types that form YQL queries))
+ *     $(TR $(TD $(LINK2 #StatementType, StatementType))
+ *          $(TD Evaluates the base YQL statement type for a YQL query type))
+ *     $(TR $(TD $(LINK2 #isOperator, isOperator))
+ *          $(TD Evaluates to true for types that form conditional operators))
+ *     $(TR $(TD $(LINK2 #isConditional, isConditional))
+ *          $(TD Evaluates to true for types that form conditional expressions))
+ *     $(TR $(TD $(LINK2 #isConditionalQuery, isConditionalQuery))
+ *          $(TD Evaluates to true for queries that end in conditional
+ *               expressions))
+ * )
  *
  * License:   $(LINK2 boost.org/LICENSE_1_0.txt, Boost License 1.0)
  * Copyright: Copyright © 2017, Lewis Revill
@@ -300,4 +316,161 @@ unittest
 
     // A string must be quoted.
     assert(!isQuotedString("string"));
+}
+
+/**
+ * Evaluates to true for types that form YQL statements.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the expression
+ */
+enum isStatement(Expr) = __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                  from!"yql.query".Select) ||
+                         __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                  from!"yql.query".InsertInto) ||
+                         __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                  from!"yql.query".Update) ||
+                         __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                  from!"yql.query".DeleteFrom);
+
+///
+@safe @nogc pure nothrow
+unittest
+{
+}
+
+
+/**
+ * Evaluates to true for types that form YQL queries.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the expression
+ */
+template isQuery(Expr)
+{
+    static if (__traits(hasMember, Expr, "query"))
+    {
+        enum isQuery = isQuery!(typeof(Expr.init.query));
+    }
+    else static if (__traits(hasMember, Expr, "lhs"))
+    {
+        enum isQuery = isQuery!(typeof(Expr.init.lhs));
+    }
+    else
+    {
+        enum isQuery = isStatement!Expr;
+    }
+}
+
+///
+@safe @nogc pure nothrow
+unittest
+{
+}
+
+
+/**
+ * Evaluates the base YQL statement type for a YQL query type.
+ *
+ * Params:
+ *     Query = (template parameter) the type of the query
+ */
+template StatementType(Query)
+{
+    static if (__traits(hasMember, Query, "query"))
+    {
+        alias StatementType = StatementType!(typeof(Query.init.query));
+    }
+    else static if (__traits(hasMember, Query, "lhs"))
+    {
+        alias StatementType = StatementType!(typeof(Query.init.lhs));
+    }
+    else static if (isStatement!Query)
+    {
+        alias StatementType = Query;
+    }
+    else
+    {
+        static assert(false, "Cannot find statement for non-query");
+    }
+}
+
+///
+@safe @nogc pure nothrow
+unittest
+{
+}
+
+
+/**
+ * Evaluates to true for types that form conditional operators.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the expression
+ */
+enum isOperator(Expr) = __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                 from!"yql.query".Compare) ||
+                        __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                 from!"yql.query".Among) ||
+                        __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                                 from!"yql.query".Between);
+
+///
+@safe @nogc pure nothrow
+unittest
+{
+}
+
+
+/**
+ * Evaluates to true for types that form conditional expressions.
+ *
+ * Params:
+ *     Expr = (template parameter) the type of the expression
+ */
+template isConditional(Expr)
+{
+    static if (__traits(isSame, from!"std.traits".TemplateOf!Expr,
+                        from!"yql.query".And) ||
+               __traits(isSame, from!"std.traits".TemplateOf!Expr,
+                        from!"yql.query".Or))
+    {
+        enum isConditional = isConditional!(typeof(Expr.init.lhs)) &&
+                             isConditional!(typeof(Expr.init.rhs));
+    }
+    else static if (__traits(isSame, from!"std.traits".TemplateOf!Expr,
+                             from!"yql.query".Not))
+    {
+        enum isConditional = isConditional!(typeof(Expr.init.expr));
+    }
+    else
+    {
+        enum isConditional = isOperator!Expr;
+    }
+}
+
+///
+@safe @nogc pure nothrow
+unittest
+{
+}
+
+/**
+ * Evaluates to true for queries that end in conditional expressions.
+ */
+enum isConditionalQuery(Expr) = isQuery!Expr &&
+                                __traits(isSame,
+                                          from!"std.traits".TemplateOf!Expr,
+                                          from!"yql.query".Where) ||
+                                 __traits(isSame,
+                                          from!"std.traits".TemplateOf!Expr,
+                                          from!"yql.query".And) ||
+                                 __traits(isSame,
+                                          from!"std.traits".TemplateOf!Expr,
+                                          from!"yql.query".Or);
+
+///
+@safe @nogc pure nothrow
+unittest
+{
 }
