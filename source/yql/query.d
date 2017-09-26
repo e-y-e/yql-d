@@ -1516,9 +1516,21 @@ Where!(Statement, Expr) where(Statement, Expr)(Statement statement, Expr expr)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable columns = [column("Ask"), column("Bid")];
+
+    immutable query = table("yahoo.finance.quotes")
+        .select(columns)
+        .where(column("symbol").equal(value("'AAPL'")));
+    assert(query.valid);
+
+    assert(query.range.eq("select Ask,Bid\n" ~
+                          "from yahoo.finance.quotes\n" ~
+                          "where symbol='AAPL'\n"));
 }
 
 @safe @nogc pure nothrow
@@ -1591,9 +1603,24 @@ Column!Char column, Order order = Order.ascending)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable columns = [column("Ask"), column("Bid")];
+    static immutable symbols = [value("'AAPL'"), value("'GOOG'"),
+                                value("'YHOO'")];
+
+    immutable query = table("yahoo.finance.quotes")
+        .select(columns)
+        .where(column("symbol").among(symbols))
+        .orderBy(column("MarketCapitalization"));
+    assert(query.valid);
+    assert(query.range.eq("select Ask,Bid\n" ~
+                          "from yahoo.finance.quotes\n" ~
+                          "where symbol in ('AAPL','GOOG','YHOO')\n" ~
+                          "order by MarketCapitalization asc\n"));
 }
 
 @safe @nogc pure nothrow
@@ -1628,6 +1655,8 @@ struct GroupBy(Statement, Char)
 
     @property auto range() inout
     {
+        import std.range : chain;
+
         return chain(statement.range, "group by ", column.range, "\n");
     }
 }
@@ -1648,4 +1677,28 @@ GroupBy!(Statement, Char) groupBy(Statement, Char)(Statement statement,
 Column!Char column)
 {
     return GroupBy!(Statement, Char)(statement, column);
+}
+
+///
+@safe pure
+unittest
+{
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable columns = [column("name"), column("price")];
+
+    immutable query = table("mycompany.yql.data")
+        .select(columns)
+        .where(column("price").lessThan(value("300")))
+        .groupBy(column("category"));
+    assert(query.valid);
+    assert(query.range.eq("select name,price\n" ~
+                          "from mycompany.yql.data\n" ~
+                          "where price<300\n" ~
+                          "group by category\n"));
+}
+
+@safe @nogc pure nothrow
+unittest
+{
 }
