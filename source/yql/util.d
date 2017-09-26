@@ -272,21 +272,15 @@ bool isQuotedString(S)(S s)
     immutable f = codeUnits.front;
     if (!(f == '\'' || f == '\"')) return false;
 
-    static if (isRandomAccessRange!(typeof(codeUnits)))
-    {
-        return codeUnits.length > 1 && codeUnits[$ - 1] == f;
-    }
-    else
-    {
-        codeUnits.popFront;
-        if (codeUnits.empty) return false;
+    codeUnits.popFront;
+    if (codeUnits.empty) return false;
 
-        for (;;)
-        {
-            immutable c = codeUnits.front;
-            if (codeUnits.empty) return c == f;
-            codeUnits.popFront;
-        }
+    for (;;)
+    {
+        immutable c = codeUnits.front;
+        codeUnits.popFront;
+        if (c == f) return codeUnits.empty;
+        if (codeUnits.empty) return false;
     }
 }
 
@@ -301,6 +295,8 @@ unittest
     // Unmatched quotes are not accepted.
     assert(!isQuotedString("'string\""));
     assert(!isQuotedString("\"string'"));
+    assert(!isQuotedString("'string'string'"));
+    assert(!isQuotedString("'string''string'"));
 
     // A string must be quoted.
     assert(!isQuotedString("string"));
