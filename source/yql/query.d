@@ -1143,15 +1143,17 @@ Select!Char select(Char)(Table!Char table, immutable(Column!Char)[] columns)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
     static immutable columns = [column("quantity")];
 
     immutable statement = select(table("mycompany.yql.data"), columns);
     assert(statement.valid);
-    assert(statement.table.name == "mycompany.yql.data");
-    assert(statement.columns[0].name == "quantity");
+    assert(statement.range.eq("select quantity\n" ~
+                              "from mycompany.yql.data\n"));
 }
 
 @safe @nogc pure nothrow
@@ -1195,6 +1197,8 @@ struct InsertInto(from!"std.typecons".Flag!"verbose" verbose, Char)
 
         this(Table!Char table, Columns columns, Values values)
         {
+            import std.algorithm.searching : any;
+
             if (!table.valid || columns.length != values.length ||
                 columns.any!(c => !c.valid)) return;
 
@@ -1207,7 +1211,7 @@ struct InsertInto(from!"std.typecons".Flag!"verbose" verbose, Char)
     {
         this(Table!Char table, Values values)
         {
-            if (!table.length) return;
+            if (!table.valid) return;
 
             this.table = table;
             this.values = values;
@@ -1224,13 +1228,13 @@ struct InsertInto(from!"std.typecons".Flag!"verbose" verbose, Char)
         static if (verbose)
         {
             return chain("insert into ", table.range, " (",
-                         columns.map!(c => c.range).joiner(","), ")\nvalues (",
-                         values.map!(v => v.range).joiner(","), ")\n");
+                         columns.map!(c => c.range.dup).joiner(","), ")\nvalues (",
+                         values.map!(v => v.range.dup).joiner(","), ")\n");
         }
         else
         {
             return chain("insert into ", table.range, "\nvalues (",
-                         values.map!(v => v.range).joiner(","), ")\n");
+                         values.map!(v => v.range.dup).joiner(","), ")\n");
         }
     }
 }
@@ -1254,9 +1258,17 @@ InsertInto!(from!"std.typecons".No.verbose, Char) insertInto(Char)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable values = [value("'Chair'"), value("300"), value("'New'")];
+
+    immutable statement = insertInto(table("mycompany.yql.data"), values);
+    assert(statement.valid);
+    assert(statement.range.eq("insert into mycompany.yql.data\n" ~
+                              "values ('Chair',300,'New')\n"));
 }
 
 /**
@@ -1280,9 +1292,20 @@ immutable(Value!Char)[] values)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable columns = [column("name"), column("price"),
+                                column("condition")];
+    static immutable values = [value("'Chair'"), value("300"), value("'New'")];
+
+    immutable statement = insertInto(table("mycompany.yql.data"), columns,
+                                     values);
+    assert(statement.valid);
+    assert(statement.range.eq("insert into mycompany.yql.data (name,price,condition)\n" ~
+                              "values ('Chair',300,'New')\n"));
 }
 
 @safe @nogc pure nothrow
@@ -1336,7 +1359,7 @@ struct Update(Char)
         import std.algorithm.iteration : map, joiner;
 
         return chain("update ", table.range, "\nset ",
-                     entries.map!(e => e.range.dup).joiner(","), "\n");
+                     entries.map!(e => e.range).joiner(","), "\n");
     }
 }
 
@@ -1356,9 +1379,18 @@ Update!Char update(Char)(Table!Char table, immutable(Entry!Char)[] entries)
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable entries = [entry(column("price"), value("50")),
+                                entry(column("discount"), value("0.2"))];
+
+    immutable statement = update(table("mycompany.yql.data"), entries);
+    assert(statement.valid);
+    assert(statement.range.eq("update mycompany.yql.data\n" ~
+                              "set price=50,discount=0.2\n"));
 }
 
 @safe @nogc pure nothrow
@@ -1414,15 +1446,20 @@ struct DeleteFrom(Char)
  *            representation of the _table
  *     table = the _table to perform the delete operation on
  */
-Delete!Char deleteFrom(Char)(Table!Char table)
+DeleteFrom!Char deleteFrom(Char)(Table!Char table)
 {
-    return Delete!Char(table);
+    return DeleteFrom!Char(table);
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
+    immutable statement = deleteFrom(table("mycompany.yql.data"));
+    assert(statement.valid);
+    assert(statement.range.eq("delete from mycompany.yql.data\n"));
 }
 
 @safe @nogc pure nothrow
