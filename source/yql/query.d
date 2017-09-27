@@ -925,13 +925,29 @@ struct And(LHS, RHS)
         import yql.util : isQuery;
         import std.range : chain;
 
-        static if (isQuery!LHS)
+        static if (__traits(isSame, from!"std.traits".TemplateOf!RHS, Or))
         {
-            return chain(lhs.range, " and ", rhs.range, "\n");
+            immutable rhsRange = chain("(", rhs.range, ")");
         }
         else
         {
-            return chain(lhs.range, " and ", rhs.range);
+            immutable rhsRange = rhs.range;
+        }
+
+        static if (isQuery!LHS)
+        {
+            return chain(lhs.range, " and ", rhsRange, "\n");
+        }
+        else
+        {
+            static if (__traits(isSame, from!"std.traits".TemplateOf!LHS, Or))
+            {
+                return chain("(", lhs.range, ") and ", rhsRange);
+            }
+            else
+            {
+                return chain(lhs.range, " and ", rhsRange);
+            }
         }
     }
 }
@@ -959,10 +975,18 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    immutable cond = column("category").equal(value("'sports'"))
+    immutable cond1 = column("category").equal(value("'sports'"))
         .and(column("price").lessThan(value("250")));
-    assert(cond.valid);
-    assert(cond.range.eq("category='sports' and price<250"));
+    assert(cond1.valid);
+    assert(cond1.range.eq("category='sports' and price<250"));
+
+    // And expressions also handle parenthesis for sub-expressions.
+    immutable cond2 = column("category").equal(value("'sports'"))
+        .or(column("brand").equal(value("'Adidas'")))
+        .and(column("price").lessThan(value("250")));
+    assert(cond2.valid);
+    assert(cond2.range
+        .eq("(category='sports' or brand='Adidas') and price<250"));
 }
 
 @safe @nogc pure nothrow
@@ -1007,7 +1031,7 @@ struct Or(LHS, RHS)
         }
         else
         {
-            return chain("(", lhs.range, " or ", rhs.range, ")");
+            return chain(lhs.range, " or ", rhs.range);
         }
     }
 }
@@ -1037,7 +1061,7 @@ unittest
     immutable cond = column("rating").greaterThan(value("4"))
         .or(column("price").lessThan(value("150")));
     assert(cond.valid);
-    assert(cond.range.eq("(rating>4 or price<150)"));
+    assert(cond.range.eq("rating>4 or price<150"));
 }
 
 @safe @nogc pure nothrow
@@ -1070,7 +1094,15 @@ struct Not(Expr)
     {
         import std.range : chain;
 
-        return chain("not ", expr.range);
+        static if (__traits(isSame, from!"std.traits".TemplateOf!Expr, And) ||
+                   __traits(isSame, from!"std.traits".TemplateOf!Expr, Or))
+        {
+            return chain("not (", expr.range, ")");
+        }
+        else
+        {
+            return chain("not ", expr.range);
+        }
     }
 }
 
@@ -1093,9 +1125,15 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    immutable cond = not(column("name").equal(value("null")));
-    assert(cond.valid);
-    assert(cond.range.eq("not name=null"));
+    immutable cond1 = not(column("name").equal(value("null")));
+    assert(cond1.valid);
+    assert(cond1.range.eq("not name=null"));
+
+    // Not expressions also handle parenthesis for sub-expressions.
+    immutable cond2 = not(column("name").equal(value("null"))
+                              .or(column("address").equal(value("null"))));
+    assert(cond2.valid);
+    assert(cond2.range.eq("not (name=null or address=null)"));
 }
 
 @safe @nogc pure nothrow
