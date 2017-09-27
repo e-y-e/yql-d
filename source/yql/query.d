@@ -220,6 +220,37 @@ unittest
             "order by Rating.AverageRating desc\n"));
 }
 
+/**
+ * Querying a theoretical online marketplace for good value smartphones.
+ */
+@safe pure
+unittest
+{
+    import std.algorithm.comparison : eq = equal;
+
+    static immutable data = [column("name"), column("price"), column("rating"),
+                             column("discount")];
+
+    immutable query = table("mycompany.yql.data")
+        .select(data)
+        .where(column("category").equal(value("'smartphones'")))
+        .and(column("price").lessThan(value("300")))
+        .and(column("rating").greaterThan(value("3.5"))
+                 .or(column("discount").greaterThan(value("0.2"))))
+        .orderBy(column("rating"), Order.descending)
+        .orderBy(column("discount"), Order.descending);
+
+    assert(query.valid);
+    assert(query.range
+        .eq("select name,price,rating,discount\n" ~
+            "from mycompany.yql.data\n" ~
+            "where category='smartphones'\n" ~
+            "and price<300\n" ~
+            "and (rating>3.5 or discount>0.2)\n" ~
+            "order by rating desc\n" ~
+            "order by discount desc\n"));
+}
+
 
 import yql.internal : from;
 
