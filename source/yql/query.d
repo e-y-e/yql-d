@@ -953,7 +953,8 @@ struct And(LHS, RHS)
 }
 
 /**
- * Creates an $(LINK2 #And, And) object with the given left and right expressions.
+ * Creates an $(LINK2 #And, And) object with the given left _and right
+ * expressions.
  *
  * Params:
  *     LHS = (template parameter) the type of the left expression
