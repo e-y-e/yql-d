@@ -337,6 +337,13 @@ enum isStatement(Expr) = __traits(isSame, from!"std.traits".TemplateOf!Expr,
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    static immutable columns = [column("*")];
+
+    immutable statement = table("mycompany.yql.data")
+        .select(columns);
+    static assert(isStatement!(typeof(statement)));
 }
 
 
@@ -366,6 +373,14 @@ template isQuery(Expr)
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    static immutable columns = [column("*")];
+
+    immutable query = table("mycompany.yql.data")
+        .select(columns)
+        .where(column("category").equal(value("'sports'")));
+    static assert(isQuery!(typeof(query)));
 }
 
 
@@ -399,6 +414,14 @@ template StatementType(Query)
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    static immutable columns = [column("*")];
+
+    immutable query = table("mycompany.yql.data")
+        .select(columns)
+        .where(column("category").equal(value("'sports'")));
+    static assert(is(StatementType!(typeof(query)) : Select!char));
 }
 
 
@@ -419,6 +442,10 @@ enum isOperator(Expr) = __traits(isSame, from!"std.traits".TemplateOf!Expr,
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    immutable cond = column("category").equal(value("'sports'"));
+    static assert(isOperator!(typeof(cond)));
 }
 
 
@@ -453,6 +480,11 @@ template isConditional(Expr)
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    immutable cond = column("category").equal(value("'sports'"))
+        .and(column("price").lessThan(value("300")));
+    static assert(isConditional!(typeof(cond)));
 }
 
 /**
@@ -473,4 +505,12 @@ enum isConditionalQuery(Expr) = isQuery!Expr &&
 @safe @nogc pure nothrow
 unittest
 {
+    import yql.query;
+
+    static immutable columns = [column("*")];
+
+    immutable query = table("mycompany.yql.data")
+        .select(columns)
+        .where(column("category").equal(value("'sports'")));
+    static assert(isConditionalQuery!(typeof(query)));
 }
