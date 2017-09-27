@@ -165,9 +165,11 @@
 module yql.query;
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
     static immutable data = [column("Ask"), column("Bid"), column("Change")];
     static immutable stocks = [value("'FB'"), value("'GOOG'"), value("'AMZN'")];
 
@@ -177,20 +179,22 @@ unittest
         .orderBy(column("Ask"));
 
     assert(query.valid);
-//     assert(query.range
-//         .equal("select Ask,Bid,Change
-//                 from yahoo.finance.tables
-//                 where symbol in ('FB','GOOG','AMZN')
-//                 order by Ask"));
+    assert(query.range
+        .eq("select Ask,Bid,Change\n" ~
+             "from yahoo.finance.quotes\n" ~
+             "where symbol in ('FB','GOOG','AMZN')\n" ~
+             "order by Ask asc\n"));
 }
 
 ///
-@safe @nogc pure nothrow
+@safe pure
 unittest
 {
+    import std.algorithm.comparison : eq = equal;
+
     static immutable data = [column("Title"), column("Address"), column("City"),
                              column("BusinessURL"),
-                             column("Rating.AverageRating"),
+                             column("Rating"),
                              column("Categories")];
 
     immutable query = table("yahoo.local")
@@ -201,13 +205,13 @@ unittest
         .orderBy(column("Rating.AverageRating"), Order.descending);
 
     assert(query.valid);
-//     assert(query.range
-//         .equal("select Title,Address,City,BusinessURL,Rating.AverageRating,Categories
-//                 from yahoo.local
-//                 where query='vegan'
-//                 and location='san francisco, ca'
-//                 and Rating.TotalRatings>5
-//                 order by Rating.AverageRating DESC"));
+    assert(query.range
+        .eq("select Title,Address,City,BusinessURL,Rating,Categories\n" ~
+            "from yahoo.local\n" ~
+            "where query='vegan'\n" ~
+            "and location='san francisco, ca'\n" ~
+            "and Rating.TotalRatings>5\n" ~
+            "order by Rating.AverageRating desc\n"));
 }
 
 
@@ -936,7 +940,7 @@ struct And(LHS, RHS)
 
         static if (isQuery!LHS)
         {
-            return chain(lhs.range, " and ", rhsRange, "\n");
+            return chain(lhs.range, "and ", rhsRange, "\n");
         }
         else
         {
@@ -1028,7 +1032,7 @@ struct Or(LHS, RHS)
 
         static if (isQuery!LHS)
         {
-            return chain(lhs.range, " or ", rhs.range, "\n");
+            return chain(lhs.range, "or ", rhs.range, "\n");
         }
         else
         {
