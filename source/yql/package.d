@@ -4,9 +4,9 @@
  *
  * $(TABLE
  *     $(TR $(TD $(B Module Name)) $(TD $(B Description)))
- *     $(TR $(TD $(LINK2 query.html, yql.query))
+ *     $(TR $(TD $(LINK2 _yql.query.html, _yql.query))
  *          $(TD Type-safe mechanisms for constructing YQL queries))
- *     $(TR $(TD $(LINK2 response.html, yql.response))
+ *     $(TR $(TD $(LINK2 _yql.response.html, _yql.response))
  *          $(TD Type-safe mechanisms for processing YQL responses))
  * )
  *
