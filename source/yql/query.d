@@ -322,7 +322,7 @@ unittest
     // No issues with this table name.
     immutable data1 = table("mycompany.yql.data");
     assert(data1.valid);
-    assert(data1.name == "mycompany.yql.data");
+    assert(data1.range == "mycompany.yql.data");
 
     // A small mistake.
     immutable data2 = table("mycompany,yql.data");
@@ -397,12 +397,12 @@ unittest
     // No issues with this column name.
     immutable q1 = column("quantity");
     assert(q1.valid);
-    assert(q1.name == "quantity");
+    assert(q1.range == "quantity");
 
     // The wildcard '*' is a valid column name.
     immutable all = column("*");
     assert(all.valid);
-    assert(all.name == "*");
+    assert(all.range == "*");
 
     // A small mistake.
     immutable q2 = column("$quantity");
@@ -416,7 +416,7 @@ unittest
     // Period-separated identifiers are valid column names.
     immutable sq = column("stock.quantity");
     assert(sq.valid);
-    assert(sq.name == "stock.quantity");
+    assert(sq.range == "stock.quantity");
 }
 
 @safe @nogc pure nothrow
@@ -484,27 +484,27 @@ unittest
 {
     // No issues with this string value.
     immutable lang1 = value("\"dlang\"");
-    assert(lang1.str == "\"dlang\"");
+    assert(lang1.range == "\"dlang\"");
 
     // Strings enclosed within single quotes are also supported.
-    immutable lang3 = value("'dlang'");
-    assert(lang3.str == "'dlang'");
+    immutable lang2 = value("'dlang'");
+    assert(lang2.range == "'dlang'");
 
     // A valid integer value.
     immutable i = value("1000");
-    assert(i.str == "1000");
+    assert(i.range == "1000");
 
     // A valid decimal value.
     immutable d1 = value("1.00");
-    assert(d1.str == "1.00");
+    assert(d1.range == "1.00");
 
     // Strings must be enclosed in double quotes.
-    immutable lang2 = value("dlang");
-    assert(lang2.str == "null");
+    immutable lang3 = value("dlang");
+    assert(lang3.range == "null");
 
     // Locales with commas as decimal marks are not currently supported.
     immutable d2 = value("1,00");
-    assert(d2.str == "null");
+    assert(d2.range == "null");
 }
 
 @safe @nogc pure nothrow
@@ -669,12 +669,12 @@ unittest
     assert(!filter2.valid);
 
     // For direct comparisons, comparing against a null value is fine.
-    immutable comp1 = column("quantity").notEqual(value("null"));
+    immutable comp1 = column("rating").notEqual(value("null"));
     assert(comp1.valid);
-    assert(comp1.range.eq("quantity!=null"));
+    assert(comp1.range.eq("rating!=null"));
 
     // For ordered comparisons, comparing against a null value is not valid.
-    immutable comp2 = column("quantity").greaterThan(value("null"));
+    immutable comp2 = column("rating").greaterThan(value("null"));
     assert(!comp2.valid);
 }
 
@@ -843,11 +843,11 @@ unittest
     assert(!filter2.valid);
 
     // If either value is null, the between comparison is not valid.
-    immutable comp1 = column("quantity").between(value("100"), value("null"));
+    immutable comp1 = column("price").between(value("100"), value("null"));
     assert(!comp1.valid);
 
     // Ditto for both null.
-    immutable comp2 = column("quantity").between(value("null"), value("null"));
+    immutable comp2 = column("price").between(value("null"), value("null"));
     assert(!comp2.valid);
 }
 
