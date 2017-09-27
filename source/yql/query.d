@@ -164,29 +164,35 @@
  */
 module yql.query;
 
-///
+/**
+ * Sorting the top tech corporations by market capitalization.
+ */
 @safe pure
 unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    static immutable data = [column("Ask"), column("Bid"), column("Change")];
-    static immutable stocks = [value("'FB'"), value("'GOOG'"), value("'AMZN'")];
+    static immutable data = [column("Name"), column("Ask"), column("Bid"),
+                             column("Change"), column("MarketCapitalization")];
+    static immutable stocks = [value("'AAPL'"), value("'AMZN'"), value("'FB'"),
+                               value("'GOOG'"), value("'YHOO'")];
 
     immutable query = table("yahoo.finance.quotes")
         .select(data)
         .where(column("symbol").among(stocks))
-        .orderBy(column("Ask"));
+        .orderBy(column("MarketCapitalization"));
 
     assert(query.valid);
     assert(query.range
-        .eq("select Ask,Bid,Change\n" ~
+        .eq("select Name,Ask,Bid,Change,MarketCapitalization\n" ~
              "from yahoo.finance.quotes\n" ~
-             "where symbol in ('FB','GOOG','AMZN')\n" ~
-             "order by Ask asc\n"));
+             "where symbol in ('AAPL','AMZN','FB','GOOG','YHOO')\n" ~
+             "order by MarketCapitalization asc\n"));
 }
 
-///
+/**
+ * Finding good vegan restaurants in San Francisco.
+ */
 @safe pure
 unittest
 {
