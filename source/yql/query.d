@@ -980,18 +980,18 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    immutable cond1 = column("category").equal(value("'sports'"))
-        .and(column("price").lessThan(value("250")));
+    immutable cond1 = column("price").lessThan(value("300"))
+        .and(column("rating").greaterThan(value("3.5")));
     assert(cond1.valid);
-    assert(cond1.range.eq("category='sports' and price<250"));
+    assert(cond1.range.eq("price<300 and rating>3.5"));
 
     // And expressions also handle parenthesis for sub-expressions.
-    immutable cond2 = column("category").equal(value("'sports'"))
-        .or(column("brand").equal(value("'Adidas'")))
-        .and(column("price").lessThan(value("250")));
+    immutable cond2 = column("price").lessThan(value("300"))
+        .and(column("rating").greaterThan(value("3.5"))
+                 .or(column("discount").greaterThan(value("0.2"))));
     assert(cond2.valid);
     assert(cond2.range
-        .eq("(category='sports' or brand='Adidas') and price<250"));
+        .eq("price<300 and (rating>3.5 or discount>0.2)"));
 }
 
 @safe @nogc pure nothrow
@@ -1063,10 +1063,10 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    immutable cond = column("rating").greaterThan(value("4"))
-        .or(column("price").lessThan(value("150")));
+    immutable cond = column("price").lessThan(value("300"))
+        .or(column("rating").greaterThan(value("4.5")));
     assert(cond.valid);
-    assert(cond.range.eq("rating>4 or price<150"));
+    assert(cond.range.eq("price<300 or rating>4.5"));
 }
 
 @safe @nogc pure nothrow
@@ -1130,15 +1130,15 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    immutable cond1 = not(column("name").equal(value("null")));
+    immutable cond1 = not(column("brand").equal(value("'samsung'")));
     assert(cond1.valid);
-    assert(cond1.range.eq("not name=null"));
+    assert(cond1.range.eq("not brand='samsung'"));
 
     // Not expressions also handle parenthesis for sub-expressions.
-    immutable cond2 = not(column("name").equal(value("null"))
-                              .or(column("address").equal(value("null"))));
+    immutable cond2 = not(column("brand").equal(value("'samsung'"))
+                              .or(column("condition").equal(value("'used'"))));
     assert(cond2.valid);
-    assert(cond2.range.eq("not (name=null or address=null)"));
+    assert(cond2.range.eq("not (brand='samsung' or condition='used')"));
 }
 
 @safe @nogc pure nothrow
@@ -1219,11 +1219,12 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    static immutable columns = [column("quantity")];
+    static immutable columns = [column("name"), column("price")];
 
-    immutable statement = select(table("mycompany.yql.data"), columns);
+    immutable statement = table("mycompany.yql.data")
+        .select(columns);
     assert(statement.valid);
-    assert(statement.range.eq("select quantity\n" ~
+    assert(statement.range.eq("select name,price\n" ~
                               "from mycompany.yql.data\n"));
 }
 
@@ -1334,12 +1335,12 @@ unittest
 {
     import std.algorithm.comparison : eq = equal;
 
-    static immutable values = [value("'Chair'"), value("300"), value("'New'")];
+    static immutable values = [value("'Chair'"), value("300"), value("4.5")];
 
     immutable statement = insertInto(table("mycompany.yql.data"), values);
     assert(statement.valid);
     assert(statement.range.eq("insert into mycompany.yql.data\n" ~
-                              "values ('Chair',300,'New')\n"));
+                              "values ('Chair',300,4.5)\n"));
 }
 
 /**
@@ -1369,14 +1370,15 @@ unittest
     import std.algorithm.comparison : eq = equal;
 
     static immutable columns = [column("name"), column("price"),
-                                column("condition")];
-    static immutable values = [value("'Chair'"), value("300"), value("'New'")];
+                                column("rating")];
+    static immutable values = [value("'Chair'"), value("300"), value("4.5")];
 
     immutable statement = insertInto(table("mycompany.yql.data"), columns,
                                      values);
     assert(statement.valid);
-    assert(statement.range.eq("insert into mycompany.yql.data (name,price,condition)\n" ~
-                              "values ('Chair',300,'New')\n"));
+    assert(statement.range
+        .eq("insert into mycompany.yql.data (name,price,rating)\n" ~
+            "values ('Chair',300,4.5)\n"));
 }
 
 @safe @nogc pure nothrow

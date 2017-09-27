@@ -339,7 +339,7 @@ unittest
 {
     import yql.query;
 
-    static immutable columns = [column("*")];
+    static immutable columns = [column("name"), column("price")];
 
     immutable statement = table("mycompany.yql.data")
         .select(columns);
@@ -375,11 +375,11 @@ unittest
 {
     import yql.query;
 
-    static immutable columns = [column("*")];
+    static immutable columns = [column("name"),column("price")];
 
     immutable query = table("mycompany.yql.data")
         .select(columns)
-        .where(column("category").equal(value("'sports'")));
+        .where(column("price").lessThan(value("300")));
     static assert(isQuery!(typeof(query)));
 }
 
@@ -416,11 +416,11 @@ unittest
 {
     import yql.query;
 
-    static immutable columns = [column("*")];
+    static immutable columns = [column("name"), column("price")];
 
     immutable query = table("mycompany.yql.data")
         .select(columns)
-        .where(column("category").equal(value("'sports'")));
+        .where(column("price").lessThan(value("300")));
     static assert(is(StatementType!(typeof(query)) : Select!char));
 }
 
@@ -444,7 +444,7 @@ unittest
 {
     import yql.query;
 
-    immutable cond = column("category").equal(value("'sports'"));
+    immutable cond = column("price").lessThan(value("300"));
     static assert(isOperator!(typeof(cond)));
 }
 
@@ -482,8 +482,8 @@ unittest
 {
     import yql.query;
 
-    immutable cond = column("category").equal(value("'sports'"))
-        .and(column("price").lessThan(value("300")));
+    immutable cond = column("price").lessThan(value("300"))
+        .and(column("rating").greaterThan(value("3.5")));
     static assert(isConditional!(typeof(cond)));
 }
 
@@ -507,10 +507,10 @@ unittest
 {
     import yql.query;
 
-    static immutable columns = [column("*")];
+    static immutable columns = [column("name"), column("price")];
 
     immutable query = table("mycompany.yql.data")
         .select(columns)
-        .where(column("category").equal(value("'sports'")));
+        .where(column("price").lessThan(value("300")));
     static assert(isConditionalQuery!(typeof(query)));
 }
